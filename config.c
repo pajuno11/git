@@ -21,6 +21,7 @@
 #include "dir.h"
 #include "color.h"
 #include "refs.h"
+#include "worktree.h"
 
 struct config_source {
 	struct config_source *prev;
@@ -2986,9 +2987,23 @@ int git_config_set_gently(const char *key, const char *value)
 	return git_config_set_multivar_gently(key, value, NULL, 0);
 }
 
+int repo_config_set_worktree_gently(struct repository *r,
+				    const char *key, const char *value)
+{
+	return upgrade_to_worktree_config(r) ||
+	       git_config_set_multivar_in_file_gently(
+			 repo_git_path(r, "config.worktree"),
+			 key, value, NULL, 0);
+}
+
 void git_config_set(const char *key, const char *value)
 {
-	git_config_set_multivar(key, value, NULL, 0);
+	repo_config_set(the_repository, key, value);
+}
+
+void repo_config_set(struct repository *r, const char *key, const char *value)
+{
+	repo_config_set_multivar(r, key, value, NULL, 0);
 
 	trace2_cmd_set_config(key, value);
 }
@@ -3283,14 +3298,32 @@ void git_config_set_multivar_in_file(const char *config_filename,
 int git_config_set_multivar_gently(const char *key, const char *value,
 				   const char *value_pattern, unsigned flags)
 {
-	return git_config_set_multivar_in_file_gently(NULL, key, value, value_pattern,
+	return repo_config_set_multivar_gently(the_repository, key, value,
+					       value_pattern, flags);
+}
+
+int repo_config_set_multivar_gently(struct repository *r, const char *key,
+				    const char *value,
+				    const char *value_pattern, unsigned flags)
+{
+	return git_config_set_multivar_in_file_gently(repo_git_path(r, "config"),
+						      key, value, value_pattern,
 						      flags);
 }
 
 void git_config_set_multivar(const char *key, const char *value,
 			     const char *value_pattern, unsigned flags)
 {
-	git_config_set_multivar_in_file(NULL, key, value, value_pattern,
+	repo_config_set_multivar(the_repository, key, value,
+				 value_pattern, flags);
+}
+
+void repo_config_set_multivar(struct repository *r, const char *key,
+			      const char *value, const char *value_pattern,
+			      unsigned flags)
+{
+	git_config_set_multivar_in_file(repo_git_path(r, "config"),
+					key, value, value_pattern,
 					flags);
 }
 
