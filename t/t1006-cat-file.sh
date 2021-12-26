@@ -34,7 +34,7 @@ do
 	'
 done
 
-test_missing_usage() {
+test_missing_usage () {
 	test_expect_code 129 "$@" 2>err &&
 	grep -E "^fatal:.*required" err
 }
@@ -66,7 +66,7 @@ do
 	done
 done
 
-test_too_many_arguments() {
+test_too_many_arguments () {
 	test_expect_code 129 "$@" 2>err &&
 	grep -E "^fatal: too many arguments$" err
 }
